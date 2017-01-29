@@ -1,6 +1,8 @@
+__all__ = ['conjugatePartition', 'conjugatePartition_slow', 'plot_YoungDiagram', 'randomPartition_AD5']
+
 from itertools import count, izip
 import matplotlib.pyplot as plt
-from numpy import arange, array, exp, pi, sqrt
+from numpy import arange, array, exp, log, pi, sqrt
 from numpy.random import RandomState
 
 def conjugatePartition(p):
@@ -35,53 +37,64 @@ def conjugatePartition_slow(p):
         p -= 1
         p = p[p > 0]
 
-def plot_YoungDiagram(partition, block_size=1, offset=(0, 0), fig_scale=0.3, margin_scale=0.2, notation='french', **kwargs):
-    partition_width = max(partition)
-    partition_height = len(partition)
+def plot_YoungDiagram(partition, offset=(0, 0), notation='french', patch_kwargs=None, ax=None):
+    if ax is None:
+        ax = plt.gca()
 
-    fig_width = fig_scale*block_size*(partition_width + 2*margin_scale)
-    fig_height = fig_scale*block_size*(partition_height + 2*margin_scale)
-
-    xlims = (offset[0] - margin_scale*block_size, offset[0] + block_size*(partition_width + margin_scale))
     if notation == 'french':
         sign = 1
-        ylims = (offset[1] - margin_scale*block_size,
-                 offset[1] + block_size*(partition_height + margin_scale))
+        notation_yoffset = 0
     elif notation == 'english':
         sign = -1
-        ylims = (offset[1] - block_size*(partition_height + margin_scale),
-                 offset[1] + margin_scale)
+        notation_yoffset = len(partition) - 1
     else:
-        raise Exception('Unknown notation style. Choose between french and english notation.')
+        raise Exception('Unknown notation style \'%s\'. Available notation styles are french and english.'%notation)
 
-    plt.figure(figsize=(fig_width, fig_height))
-    for level, part_size in zip(range(0, len(partition)), partition):
-        # Plot part contour
-        xs = [offset[0],
-              offset[0] + part_size*block_size,
-              offset[0] + part_size*block_size,
-              offset[0],
-              offset[0]]
+    patch_kwargs_default = {'linewidth':1, 'facecolor':'none', 'edgecolor':'black', 'aa':True}
+    if patch_kwargs is None:
+        patch_kwargs = patch_kwargs_default
+    else:
+        patch_kwargs_default.update(patch_kwargs)
+        patch_kwargs = patch_kwargs_default
 
-        ys = [offset[1] + block_size*sign*level,
-              offset[1] + block_size*sign*level,
-              offset[1] + block_size*sign*(level+1),
-              offset[1] + block_size*sign*(level+1),
-              offset[1] + block_size*sign*level]
+    for k, part in enumerate(partition):
+        for i in xrange(part):
+            x = offset[0] + i
+            y = offset[1] + notation_yoffset + sign*k
+            patch = plt.Rectangle([x, y], 1, 1, **patch_kwargs)
+            ax.add_patch(patch)
+    
 
-        plt.plot(xs, ys, linewidth=2, color='black', **kwargs)
-
-        # Plot part interior
-        for x in xrange(1, part_size):
-            plt.plot([offset[0] + block_size*x, offset[0] + block_size*x],
-                     [offset[1] + block_size*sign*level, offset[1] + block_size*sign*(level + 1)],
-                     linewidth=2, color='black', **kwargs)
-
-    #plt.title(tuple(partition))
-    plt.xlim(*xlims)
-    plt.ylim(*ylims)
-    plt.grid('off')
+    plt.xlim(offset[0] - 1, offset[0] + max(partition) + 1)
+    plt.ylim(offset[1] - 1, offset[1] + len(partition) + 1)
     plt.axis('off')
+    ax.set_aspect('equal')
+
+def plot_asymptotic_shape(partition, offset=(0, 0), notation='french', plot_kwargs=None, ax=None):
+    if ax is None:
+        ax = plt.gca()
+
+    n = sum(partition)
+    lambda_ks = arange(1, max(max(partition), len(partition)) + 1)
+    ks = -sqrt(6*n)/pi*log(1 - exp(-pi/sqrt(6)*lambda_ks/sqrt(n)))
+    lambda_ks = offset[0] + lambda_ks
+
+    if notation == 'french':
+        pass
+    elif notation == 'english':
+        ks = offset[1] - ks + len(partition)
+    else:
+        raise Exception('Unknown notation style \'%s\'. Available notation styles are french and english.'%notation)
+
+    plot_kwargs_default = {'linewidth':2, 'color':'red'}
+    if plot_kwargs is None:
+        plot_kwargs = plot_kwargs_default
+    else:
+        plot_kwargs_default.update(plot_kwargs)
+        plot_kwargs = plot_kwargs_default
+
+    plt.plot(lambda_ks, ks, **plot_kwargs)
+
 
 def randomPartition_AD5(n, m=None, seed=None):
     '''Uniform sampling of partitions of n using PDC with deterministic second half
