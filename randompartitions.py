@@ -152,9 +152,7 @@ def randomPartition_AD5(n, m=None, seed=None):
 
     '''
 
-    if seed == None:
-        rng = RandomState()
-    elif isinstance(seed, RandomState):
+    if isinstance(seed, RandomState):
         rng = seed
     else:
         rng = RandomState(seed)
