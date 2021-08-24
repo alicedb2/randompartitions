@@ -1,6 +1,6 @@
 __all__ = ['conjugatePartition', 'conjugatePartition_slow', 'plot_YoungDiagram', 'randomPartition_AD5']
 
-from itertools import count, izip
+from itertools import count
 import matplotlib.pyplot as plt
 from numpy import arange, array, exp, log, pi, sqrt
 from numpy.random import RandomState
@@ -58,7 +58,7 @@ def plot_YoungDiagram(partition, offset=(0, 0), notation='french', patch_kwargs=
         patch_kwargs = patch_kwargs_default
 
     for k, part in enumerate(partition):
-        for i in xrange(part):
+        for i in range(part):
             x = offset[0] + i
             y = offset[1] + notation_yoffset + sign*k
             patch = plt.Rectangle([x, y], 1, 1, **patch_kwargs)
@@ -176,5 +176,5 @@ def randomPartition_AD5(n, m=None, seed=None):
         k = n - (idx_range*Z).sum()
         if k >= 0 and rng.uniform() < exp(-k*pi/sqrt(6*n)):
             Z = [k] + list(Z)
-            partition = [i for i, zi in izip(xrange(1, n+1), Z) for _ in xrange(zi)][::-1]
+            partition = [i for i, zi in zip(range(1, n+1), Z) for _ in range(zi)][::-1]
             return partition if not m else conjugatePartition(partition)
