@@ -5,6 +5,9 @@ package:
 source:
   git_url: https://github.com/alicedb2/randompartitions.git
 
+build:
+  noarch: generic
+
 requirements:
   build:
     - python
